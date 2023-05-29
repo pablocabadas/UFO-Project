@@ -37,3 +37,63 @@ df_ufo
 df_ufo.to_csv('ufo.csv', index=False)
 df_ufo.to_excel('ufo.xlsx', index=False)
 
+def add_location_data(df):
+    geolocator = Nominatim(user_agent="my_code")
+    location_list = []
+
+    for i in df.location:
+        coordinates = i
+        location = geolocator.reverse(coordinates)
+        location_list.append(location.raw)
+
+    province_list = []
+    state_list = []
+    hamlet_lat_list = []
+    hamlet_lon_list = []
+    for i in location_list:
+        try:
+            province = i['address']['state_district']
+            state = i['address']['state']
+            hamlet_lat = i['lat']
+            hamlet_lon = i['lon']
+
+            province_list.append(province)
+            state_list.append(state)
+            hamlet_lat_list.append(hamlet_lat)
+            hamlet_lon_list.append(hamlet_lon)
+
+        except:
+            try:
+                province = i['address']['province']
+                state = i['address']['state']
+                hamlet_lat = i['lat']
+                hamlet_lon = i['lon']
+
+                province_list.append(province)
+                state_list.append(state)
+                hamlet_lat_list.append(hamlet_lat)
+                hamlet_lon_list.append(hamlet_lon)
+            except:
+                try:
+                    province = "nan"
+                    state = "nan"
+                    hamlet_lat = "nan"
+                    hamlet_lon = "nan"
+
+                    province_list.append(province)
+                    state_list.append(state)
+                    hamlet_lat_list.append(hamlet_lat)
+                    hamlet_lon_list.append(hamlet_lon)
+                except:
+                    continue
+
+    df_location = pd.DataFrame({'province': province_list, 'state': state_list, 'hamlet location': list(zip(hamlet_lat_list, hamlet_lon_list))})
+
+    all_ufo = pd.concat([df, df_location], axis=1)
+
+    return all_ufo
+
+all_ufo = add_location_data(df_ufo)
+all_ufo
+
+all_ufo.to_excel('all_ufo.xlsx', index=False)
